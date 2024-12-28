@@ -26,6 +26,5 @@ def plot_factors(factors, img_name = "test"):
     plt.savefig(f"imgs/{img_name}.png") 
 
 
-def plot_elbow(num_clusters, inertias):
-    plt.plot(range(1, num_clusters+1), inertias)
-    plt.savefig(f"imgs/elbow.png")
+def plot_elbow(visualizer):
+    visualizer.show(outpath = "imgs/elbow.png")

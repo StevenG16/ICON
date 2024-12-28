@@ -1,6 +1,8 @@
 from data_preprocessing import query_to_dataset, data_files, queries
 from sklearn.cluster import MiniBatchKMeans
+from yellowbrick.cluster import KElbowVisualizer
 import data_visualization
+import numpy as np
 
 
 def test_clustering(dataset, num_clusters):
@@ -19,11 +21,19 @@ def elbow_test(dataset, max_clusters):
     return inertias
 
 
+def elbow_test2(dataset, max_clusters):
+    kmeans = MiniBatchKMeans()
+    visualizer = KElbowVisualizer(kmeans, k = (1, max_clusters))
+    dataset = np.array(dataset)
+    visualizer.fit(dataset)
+    return visualizer
+
+
 def test_main():
     max_clusters = 20
     dataset = query_to_dataset(data_files["small_prolog"], queries["factors_all"])
-    inertias = elbow_test(dataset, max_clusters)
-    data_visualization.plot_elbow(max_clusters, inertias)
+    visualizer = elbow_test2(dataset, max_clusters)
+    data_visualization.plot_elbow(visualizer)
 
 def main():
     
