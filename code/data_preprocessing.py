@@ -1,35 +1,23 @@
 import pandas as pd
 from pyswip import Prolog
+import os
 
 
-
-def test_prolog(prolog_path):
-    query_str1 = "country(ph, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P)"
-    query_str2 = "country(ph, Results)"
-    query_str3 = "person( _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _ )"
+os.environ['OMP_NUM_THREADS'] = "1"
 
 
-    prolog = Prolog()
-    prolog.consult(prolog_path)
-    solutions1 = prolog.query(query_str1)
-    solutions2 = list(prolog.query(query_str2))[0]["Results"]
-    solutions3 = prolog.query(query_str3)
-    
-    print("Solutions2 num results: ", len(solutions2))
+queries = {
+    "factors_us":"country(us, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P)",
+    "all_data":"person( GENDER, ACCURACY, COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )",
+    "factors_all":"person_factors( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )"
+}
 
-    i = 0    
-    for sol in solutions1:
-        i += 1
-    
-    print("Solutions1 num results: ", i)
+data_files = {
+    "small_prolog":"small_data.pl",
+    "big_prolog": "data.pl"
+}
 
-    i = 0    
-    for sol in solutions3:
-        i += 1
-    
-    print("Solutions3 num results: ", i)
 
-    
 
 def read_csv(path, col_to_drop = []):
     data_file = pd.read_csv(path, delimiter="\t")
@@ -64,14 +52,11 @@ def shrink_data(data_file):
     return data_copy
 
 
-def rows_to_facts(data_file):    
+def rows_to_facts(data_file, fact_head, fact_tail):    
     cols = data_file.columns.tolist()
-    cols_upper = [col.upper() for col in cols]
+    #cols_upper = [col.upper() for col in cols]
 
     facts = []
-    fact_head = "person( "
-    fact_tail = " )."
-
 
     for index, row in data_file.iterrows():
         fact = fact_head
@@ -95,42 +80,63 @@ def write_prolog(lines, prolog_path):
         print(f"{e}")
 
 
+def query_to_dataset(prolog_path, prolog_query):
+    dataset = []
+    prolog = Prolog()
+
+    try:
+        prolog.consult(prolog_path)
+        solutions = prolog.query(prolog_query)
+    except Exception as e:
+        print(e)
+
+    for sol in solutions:
+        dataset.append(list(sol.values()))
+
+    return dataset
+
 
 def main():
-    rules = ["country(COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) :- person( _, _, COUNTRY1, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), COUNTRY = COUNTRY1.",
-            "country(COUNTRY, Results) :- findall(person( GENDER1, ACCURACY1, COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), person( GENDER1, ACCURACY1, COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), Results).",
-            "gender(GENDER, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) :- person( GENDER1, _, _, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), GENDER1 = GENDER.",
-            "gender(GENDER, Results) :- findall(person( GENDER, ACCURACY1, COUNTRY1, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), person( GENDER, ACCURACY1, COUNTRY1, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), Results)."
-    ]
     data_path = "../data/16PF/data.csv"
-    prolog_path = "data.pl"
-    small_prolog_path = "small_data.pl"
     to_drop = ["source", "elapsed", "age"]
+    fact_head = "person( "
+    fact_tail = " )."
 
-    print("[*] Reading csv file...")
 
-    df = read_csv(data_path, to_drop)
+    rules_small = ["country(COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) :- person( _, _, COUNTRY1, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), COUNTRY = COUNTRY1.",
+                "country(COUNTRY, Results) :- findall(person( GENDER1, ACCURACY1, COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), person( GENDER1, ACCURACY1, COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), Results).",
+                "gender(GENDER, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) :- person( GENDER1, _, _, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), GENDER1 = GENDER.",
+                "gender(GENDER, Results) :- findall(person( GENDER, ACCURACY1, COUNTRY1, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), person( GENDER, ACCURACY1, COUNTRY1, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), Results).",
+                "person_factors( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ) :- person( _, _, _, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )."
+        ]
 
-    print("[+] csv file read correctly")
+    def write_big():
+        print("[*] Reading csv file...")
+        df = read_csv(data_path, to_drop)
+        print("[+] csv file read correctly")
+        print("[*] Converting data in prolog clauses...")
+        program = rows_to_facts(df, fact_head, fact_tail)
+        print("[*] Writing program to prolog file...")
+        write_prolog(program, data_files["big_prolog"])     
+        print("[+] Program file written correctly")
+
+    def write_small():
+        print("[*] Reading csv file...")
+        df = read_csv(data_path, to_drop)
+        print("[+] csv file read correctly")
+        print("[*] Shrinking data...")
+        df = shrink_data(df)
+        print("[*] Converting data in prolog clauses...")
+        facts = rows_to_facts(df, fact_head, fact_tail)
+        program = rules_small + facts
+        print("[*] Writing program to prolog file...")
+        write_prolog(program, data_files["small_prolog"])
+        print("[+] Program file written correctly")
+
+
+
+
     
-    print("[*] Shrinking data...")
-
-    df = shrink_data(df)
-
-    print("[*] Converting data in prolog clauses...")
-
-    facts = rows_to_facts(df)
-    program = rules + facts
-
-    print("[*] Writing program to prolog file...")
-
-    write_prolog(program, small_prolog_path)
-
-    print("[+] Program file written correctly")
-
-    print("[*] Testing prolog query...")
-
-    test_prolog(small_prolog_path)
     
     
 
