@@ -9,14 +9,31 @@ os.environ['OMP_NUM_THREADS'] = "1"
 queries = {
     "factors_us":"country(us, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P)",
     "all_data":"person( GENDER, ACCURACY, COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )",
-    "factors_all":"person_factors( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )"
+    "factors_all":"person_factors( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )",
+    "factors_all_weighted": "person_factors_weighted(WEIGHT, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )"
 }
 
 data_files = {
-    "small_prolog":"small_data.pl",
-    "big_prolog": "data.pl"
+    "small_prolog": "small_data.pl",
+    "big_prolog": "data.pl",
+    "small_prolog_clustered": "small_data_clustered.pl"
 }
 
+facts_pieces = {
+    "heads":{"person_raw":"person( ", "person_clustered": "person_clustered( "},
+    "tails":{"person_raw":" ).", "person_clustered":" )."}
+}
+
+rules = {
+    "small_prolog": ["country(COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) :- person( _, _, COUNTRY1, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), COUNTRY = COUNTRY1.",
+                "country(COUNTRY, Results) :- findall(person( GENDER1, ACCURACY1, COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), person( GENDER1, ACCURACY1, COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), Results).",
+                "gender(GENDER, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) :- person( GENDER1, _, _, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), GENDER1 = GENDER.",
+                "gender(GENDER, Results) :- findall(person( GENDER, ACCURACY1, COUNTRY1, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), person( GENDER, ACCURACY1, COUNTRY1, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), Results).",
+                "person_factors( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ) :- person( _, _, _, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ).",
+                "person_factors_weighted(WEIGHT, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ) :- person( _, WEIGHT, _, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )."
+                ],
+    "small_prolog_clustered": []
+}
 
 
 def read_csv(path, col_to_drop = []):
@@ -70,7 +87,6 @@ def rows_to_facts(data_file, fact_head, fact_tail):
     
     return facts
 
-
 def write_prolog(lines, prolog_path):
     try:
         with open(prolog_path, mode="w") as pf:
@@ -92,8 +108,21 @@ def query_to_dataset(prolog_path, prolog_query):
 
     for sol in solutions:
         dataset.append(list(sol.values()))
+        
 
     return dataset
+
+
+def clusters_to_facts(clusters, fact_head, fact_tail):
+    facts = []
+
+    for i in range(len(clusters)):
+        for factors in clusters[i]:
+            fact_body = (", ".join([str(factor) for factor in factors])) + f", {i}"
+            fact = f"{fact_head}{fact_body}{fact_tail}"
+            facts.append(fact)
+
+    return facts
 
 
 def main():
@@ -103,12 +132,7 @@ def main():
     fact_tail = " )."
 
 
-    rules_small = ["country(COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) :- person( _, _, COUNTRY1, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), COUNTRY = COUNTRY1.",
-                "country(COUNTRY, Results) :- findall(person( GENDER1, ACCURACY1, COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), person( GENDER1, ACCURACY1, COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), Results).",
-                "gender(GENDER, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) :- person( GENDER1, _, _, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), GENDER1 = GENDER.",
-                "gender(GENDER, Results) :- findall(person( GENDER, ACCURACY1, COUNTRY1, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), person( GENDER, ACCURACY1, COUNTRY1, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ), Results).",
-                "person_factors( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P ) :- person( _, _, _, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )."
-        ]
+    rules_small = rules["small_prolog"]
 
     def write_big():
         print("[*] Reading csv file...")
