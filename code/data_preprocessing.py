@@ -10,7 +10,8 @@ queries = {
     "factors_us":"country(us, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P)",
     "all_data":"person( GENDER, ACCURACY, COUNTRY, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )",
     "factors_all":"person_factors( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )",
-    "factors_all_weighted": "person_factors_weighted(WEIGHT, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )"
+    "factors_all_weighted": "person_factors_weighted(WEIGHT, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P )",
+    "factors_all_clustered": "person_clustered( A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P , CLUSTER )"
 }
 
 data_files = {
