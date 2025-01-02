@@ -129,8 +129,8 @@ def clusters_to_facts(clusters, fact_head, fact_tail):
 def main():
     data_path = "../data/16PF/data.csv"
     to_drop = ["source", "elapsed", "age"]
-    fact_head = "person( "
-    fact_tail = " )."
+    fact_head = facts_pieces["heads"]["person_raw"]
+    fact_tail = facts_pieces["tail"]["person_raw"]
 
 
     rules_small = rules["small_prolog"]
