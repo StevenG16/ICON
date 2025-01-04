@@ -98,7 +98,7 @@ def main():
     global seed
     seed = np.random.randint(100)
     print("[*] Clustering the data...")
-    clusters = cluster_data(visualize=True)    
+    clusters = cluster_data(visualize=False)    
     print("[+] Data successfully clustered")
     print("[*] Converting data into facts and writing to prolog file...")
     output_data(clusters)
