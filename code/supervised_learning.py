@@ -42,7 +42,7 @@ hyperparams = {
     }
 }
 
-# Same parameter configurations in "params_config.pkl", saved as a global variable for ease of use
+# Same parameter configurations as in "params_config.pkl", saved as a global variable for ease of use
 
 best_hyperparameters = {
     "DecisionTree": {'criterion': 'log_loss', 'max_depth': None, 'min_samples_leaf': 5, 'min_samples_split': 2, 'splitter': 'best'},
@@ -275,8 +275,11 @@ def test_on_new():
 
 
 
+
+
 def main():
-    test_on_new()
+    view_test_results()
+    #test_on_new()
 
 if __name__ == "__main__":
     main()
