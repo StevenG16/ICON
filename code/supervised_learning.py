@@ -257,13 +257,11 @@ def view_test_results():
         result = model_test_results[model_name]
         view_result(model_name, train_sizes, result)
         
+# Main for testing on new examples
 def test_on_new():
     pilot = np.array([0.45, 0.75, 0.8, 0.6, 0.5, 0.7, 0.7, 0.3, 0.5, 0.37, 0.65, 0.35, 0.45, 0.6, 0.8, 0.25])
     artist = np.array([0.45, 0.98, 0.7, 0.75, 0.45, 0.35, 0.75, 0.85, 0.45, 0.7, 0.53, 0.5, 0.62, 0.73, 0.72, 0.71])
     writer = np.array([0.3, 0.9, 0.72, 0.7, 0.38, 0.4, 0.77, 0.9, 0.55, 0.9, 0.45, 0.5, 0.62, 0.75, 0.74, 0.73])
-    plot_factors(pilot, "pilot")
-    plot_factors(artist, "artist")
-    plot_factors(writer, "writer")
 
     data = data_preprocessing.query_to_dataset(data_preprocessing.data_files["small_prolog_clustered"], data_preprocessing.queries["factors_all_clustered"])
     dataset = Dataset(data, target_index=-1)
@@ -278,8 +276,7 @@ def test_on_new():
 
 
 def main():
-    view_test_results()
-    #test_on_new()
+    test_on_new()
 
 if __name__ == "__main__":
     main()
